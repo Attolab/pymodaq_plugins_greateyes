@@ -571,6 +571,8 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
         if not self.settings.child("temperature_settings", "check_temperature").value():
             self.killTimer(self.timerTemp)
 
+        self.update_image()
+        
         # Set up callback
         callback = GreateyesCallback(self.controller.DllIsBusy)
         callback.exposure = self.settings.child(
@@ -648,7 +650,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
         elif param.name() == "do_temperature":
             if param.value():
                 self.controller.TemperatureControl_Init()
-                self.controller.TemperatureControl_SetTemperature(param.value())
+                self.controller.TemperatureControl_SetTemperature(self.settings['temperature_settings', 'set_point'])
             else:
                 self.controller.TemperatureControl_SwitchOff()
 
