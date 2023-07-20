@@ -3,14 +3,13 @@ import time
 import sys, os
 from easydict import EasyDict as edict
 from PyQt5 import QtWidgets, QtCore
-from pymodaq.daq_utils.daq_utils import (
+from pymodaq.utils.daq_utils import (
     ThreadCommand,
     getLineInfo,
-    DataFromPlugins,
-    Axis,
 )
-from pymodaq.daq_viewer.utility_classes import DAQ_Viewer_base, comon_parameters
-from pymodaq.daq_utils.parameter.utils import iter_children
+from pymodaq.utils.data import Axis, DataFromPlugins
+from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters
+from pymodaq.utils.parameter.utils import iter_children
 
 # Import GreatEyes SDK: In the hardware folder must be placed greateyesSDK.py, greateyes.dll, geCommLib.dll
 HARDWARE_DIR = os.path.abspath(
@@ -37,7 +36,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                     "title": "Connection type",
                     "name": "connection_type",
                     "type": "list",
-                    "values": ["Ethernet", "USB"],
+                    "limits": ["Ethernet", "USB"],
                     "readonly": False,
                 },
                 {
@@ -314,7 +313,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
         try:
             # Start initializing
             self.emit_status(
-                ThreadCommand("show_splash", ["Initializing Greateyes CCD Camera"])
+                ThreadCommand("show_splash", "Initializing Greateyes CCD Camera")
             )
 
             if self.settings.child(("controller_status")).value() == "Slave":
@@ -338,7 +337,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             # initialize viewers pannel with the future type of data
             # we perform a blocking measurement for simplicity here.
 
-            self.emit_status(ThreadCommand("show_splash", ["Taking one image"]))
+            self.emit_status(ThreadCommand("show_splash", "Taking one image"))
 
             self.data_grabed_signal_temp.emit(
                 [
@@ -405,7 +404,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                 connectionSetupWorked = self.controller.ConnectToSingleCameraServer()
                 if connectionSetupWorked:
                     self.emit_status(
-                        ThreadCommand("show_splash", ["Connected to Camera Server"])
+                        ThreadCommand("show_splash", "Connected to Camera Server")
                     )
                 else:
                     raise Exception("Could not connect to camera")
@@ -448,11 +447,11 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                 CameraModel[1]
             )
             self.emit_status(
-                ThreadCommand("show_splash", ["Connected to Camera " + CameraModel[1]])
+                ThreadCommand("show_splash", "Connected to Camera " + CameraModel[1])
             )
 
             if self.controller.InitCamera(addr=addr):
-                self.emit_status(ThreadCommand("show_splash", ["Camera Initialized"]))
+                self.emit_status(ThreadCommand("show_splash", "Camera Initialized"))
             else:
                 self.controller.DisconnectCamera()
                 raise Exception(
@@ -473,7 +472,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
         # Get Functions
         # =================================================
         self.emit_status(
-            ThreadCommand("show_splash", ["Obtaining Camera parameters..."])
+            ThreadCommand("show_splash", "Obtaining Camera parameters...")
         )
         self.settings.child("camera_settings", "firmware_version").setValue(
             self.controller.GetFirmwareVersion()
