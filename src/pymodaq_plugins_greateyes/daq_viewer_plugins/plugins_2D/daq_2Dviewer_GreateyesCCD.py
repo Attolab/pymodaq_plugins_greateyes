@@ -7,7 +7,7 @@ from pymodaq.utils.daq_utils import (
     ThreadCommand,
     getLineInfo,
 )
-from pymodaq.utils.data import Axis, DataFromPlugins
+from pymodaq.utils.data import Axis, DataFromPlugins, DataToExport
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters
 from pymodaq.utils.parameter.utils import iter_children
 
@@ -339,24 +339,17 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
             self.emit_status(ThreadCommand("show_splash", "Taking one image"))
 
-            self.data_grabed_signal_temp.emit(
-                [
-                    DataFromPlugins(
-                        name="CCD Image",
-                        data=[
-                            self.controller.PerformMeasurement_Blocking_DynBitDepth(
-                                correctBias=self.settings.child(
-                                    "acquisition_settings", "do_correct_bias"
-                                ).value()
-                            ).astype(float)
-                        ],
-                        dim="Data2D",
-                        labels=["dat0"],
-                        x_axis=self.y_axis,
-                        y_axis=self.x_axis,
-                    ),
-                ]
-            )
+            self.data_grabed_signal_temp.emit(DataToExport('Greateyes',
+                                                           data=[DataFromPlugins(name='CCD Image', data=[
+                                                               self.controller.PerformMeasurement_Blocking_DynBitDepth(
+                                                                   correctBias=self.settings.child(
+                                                                       "acquisition_settings", "do_correct_bias"
+                                                                   ).value()
+                                                               ).astype(float)],
+                                                                                 dim='Data2D', labels=['dat0'],
+                                                                                 x_axis=self.x_axis,
+                                                                                 y_axis=self.y_axis), ]))
+
             self.settings.child(
                 "acquisition_settings", "timing_settings", "last_meas_time"
             ).setValue("{:.1f}".format(self.controller.GetLastMeasTimeNeeded() * 1000))
@@ -803,16 +796,11 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
         if data_shape != self.data_shape:
             self.data_shape = data_shape
             # init the viewers
-            self.data_grabed_signal_temp.emit(
-                [
-                    DataFromPlugins(
-                        name="Camera ",
-                        data=[np.squeeze(np.zeros((height, width)).astype(float))],
-                        dim=self.data_shape,
-                        labels="Camera",
-                    )
-                ]
-            )
+            self.data_grabed_signal_temp.emit(DataToExport('Greateyes',
+                                                           data=[DataFromPlugins(name='CCD Image', data=[np.squeeze(np.zeros((height, width)).astype(float))],
+                                                                                 dim=self.data_shape, labels=['Camera'],
+                                                                                 x_axis=self.x_axis,
+                                                                                 y_axis=self.y_axis), ]))
 
     def emit_data(self):
         """
@@ -831,16 +819,14 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                 size_y = self.settings.child("acquisition_settings", "N_y").value()
                 size_x = self.settings.child("acquisition_settings", "N_x").value()
                 data = self.controller.GetMeasurementData_DynBitDepth()
-                self.data_grabed_signal.emit(
-                    [
-                        DataFromPlugins(
-                            name="Camera",
-                            data=[np.squeeze(data.reshape(size_y, size_x)).astype(float)],
-                            dim=self.data_shape,
-                            labels="Camera",
-                        )
-                    ]
-                )
+                self.data_grabed_signal.emit(DataToExport('Greateyes',
+                                                               data=[DataFromPlugins(name='CCD Image', data=[
+                                                                   np.squeeze(data.reshape(size_y, size_x)).astype(float)],
+                                                                                     dim=self.data_shape,
+                                                                                     labels=['Camera'],
+                                                                                     x_axis=self.x_axis,
+                                                                                     y_axis=self.y_axis), ]))
+
                 self.settings.child("camera_settings", "camera_status").setValue(
                     "Data received"
                 )
@@ -906,8 +892,8 @@ def main():
     """
     import sys
     from PyQt5 import QtWidgets
-    from pymodaq.daq_utils.gui_utils import DockArea
-    from pymodaq.daq_viewer.daq_viewer_main import DAQ_Viewer
+    from pymodaq.utils.gui_utils import DockArea
+    from pymodaq.control_modules.daq_viewer import DAQ_Viewer
     from pathlib import Path
 
     app = QtWidgets.QApplication(sys.argv)
@@ -918,7 +904,7 @@ def main():
     win.setWindowTitle("PyMoDAQ Viewer")
     detector = Path(__file__).stem[13:]
     det_type = f"DAQ{Path(__file__).stem[4:6].upper()}"
-    prog = DAQ_Viewer(area, title="Testing", DAQ_type=det_type)
+    prog = DAQ_Viewer(area, title="Testing")
     win.show()
     prog.detector = detector
     prog.init_det()
