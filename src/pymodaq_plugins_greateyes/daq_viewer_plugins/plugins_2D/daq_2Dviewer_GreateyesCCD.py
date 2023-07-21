@@ -688,8 +688,6 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             self.x_axis = Axis(
                 data=np.linspace(0, Nx - 1, Nx, dtype=int), label="Pixels"
             )
-
-            self.emit_x_axis()
         else:
             raise (Exception("Controller not defined"))
         return self.x_axis
@@ -709,7 +707,6 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             self.y_axis = Axis(
                 data=np.linspace(0, Ny - 1, Ny, dtype=int), label="Pixels"
             )
-            self.emit_y_axis()
         else:
             raise (Exception("Controller not defined"))
         return self.y_axis
