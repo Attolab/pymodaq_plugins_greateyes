@@ -339,7 +339,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
             self.emit_status(ThreadCommand("show_splash", "Taking one image"))
 
-            self.data_grabed_signal_temp.emit(DataToExport('Greateyes',
+            self.dte_signal_temp.emit(DataToExport('Greateyes',
                                                            data=[DataFromPlugins(name='CCD Image', data=[
                                                                self.controller.PerformMeasurement_Blocking_DynBitDepth(
                                                                    correctBias=self.settings.child(
@@ -796,7 +796,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
         if data_shape != self.data_shape:
             self.data_shape = data_shape
             # init the viewers
-            self.data_grabed_signal_temp.emit(DataToExport('Greateyes',
+            self.dte_signal_temp.emit(DataToExport('Greateyes',
                                                            data=[DataFromPlugins(name='CCD Image', data=[np.squeeze(np.zeros((height, width)).astype(float))],
                                                                                  dim=self.data_shape, labels=['Camera'],
                                                                                  x_axis=self.x_axis,
@@ -819,7 +819,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                 size_y = self.settings.child("acquisition_settings", "N_y").value()
                 size_x = self.settings.child("acquisition_settings", "N_x").value()
                 data = self.controller.GetMeasurementData_DynBitDepth()
-                self.data_grabed_signal.emit(DataToExport('Greateyes',
+                self.dte_signal.emit(DataToExport('Greateyes',
                                                                data=[DataFromPlugins(name='CCD Image', data=[
                                                                    np.squeeze(data.reshape(size_y, size_x)).astype(float)],
                                                                                      dim=self.data_shape,
