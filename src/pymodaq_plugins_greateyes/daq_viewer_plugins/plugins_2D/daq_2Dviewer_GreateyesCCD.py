@@ -347,8 +347,8 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                                                                    ).value()
                                                                ).astype(float)],
                                                                                  dim='Data2D', labels=['dat0'],
-                                                                                 x_axis=self.x_axis,
-                                                                                 y_axis=self.y_axis), ]))
+                                                                                 x_axis=self.y_axis,
+                                                                                 y_axis=self.x_axis), ]))
 
             self.settings.child(
                 "acquisition_settings", "timing_settings", "last_meas_time"
@@ -799,8 +799,8 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             self.dte_signal_temp.emit(DataToExport('Greateyes',
                                                            data=[DataFromPlugins(name='CCD Image', data=[np.squeeze(np.zeros((height, width)).astype(float))],
                                                                                  dim=self.data_shape, labels=['Camera'],
-                                                                                 x_axis=self.x_axis,
-                                                                                 y_axis=self.y_axis), ]))
+                                                                                 x_axis=self.y_axis,
+                                                                                 y_axis=self.x_axis), ]))
 
     def emit_data(self):
         """
@@ -824,8 +824,8 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                                                                    np.squeeze(data.reshape(size_y, size_x)).astype(float)],
                                                                                      dim=self.data_shape,
                                                                                      labels=['Camera'],
-                                                                                     x_axis=self.x_axis,
-                                                                                     y_axis=self.y_axis), ]))
+                                                                                     x_axis=self.y_axis,
+                                                                                     y_axis=self.x_axis), ]))
 
                 self.settings.child("camera_settings", "camera_status").setValue(
                     "Data received"
