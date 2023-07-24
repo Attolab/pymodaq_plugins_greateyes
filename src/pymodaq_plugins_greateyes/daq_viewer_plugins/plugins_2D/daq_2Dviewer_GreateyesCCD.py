@@ -282,6 +282,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
         self.x_axis = None
         self.y_axis = None
+        self.axes = None
         self.data_shape = None
         self.controller = None
         self.callback_thread = None
@@ -312,10 +313,6 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
         try:
             # Start initializing
-            self.emit_status(
-                ThreadCommand("show_splash", "Initializing Greateyes CCD Camera")
-            )
-
             if self.settings.child(("controller_status")).value() == "Slave":
                 if controller is None:
                     raise Exception(
@@ -335,24 +332,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             self.status.y_axis = self.y_axis
 
             # initialize viewers pannel with the future type of data
-            # we perform a blocking measurement for simplicity here.
-
-            self.emit_status(ThreadCommand("show_splash", "Taking one image"))
-
-            self.dte_signal_temp.emit(DataToExport('Greateyes',
-                                                   data=[DataFromPlugins(name='CCD Image', data=[
-                                                       self.controller.PerformMeasurement_Blocking_DynBitDepth(
-                                                           correctBias=self.settings.child(
-                                                               "acquisition_settings", "do_correct_bias"
-                                                           ).value()
-                                                       ).astype(float)],
-                                                                         dim='Data2D', labels=['dat0'],
-                                                                         x_axis=self.x_axis,
-                                                                         y_axis=self.y_axis), ]))
-
-            self.settings.child(
-                "acquisition_settings", "timing_settings", "last_meas_time"
-            ).setValue("{:.1f}".format(self.controller.GetLastMeasTimeNeeded() * 1000))
+            self.prepare_data()
 
             self.status.info = "Camera initialized correctly"
             self.status.initialized = True
@@ -395,11 +375,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             )
             if connectionSetupWorked:
                 connectionSetupWorked = self.controller.ConnectToSingleCameraServer()
-                if connectionSetupWorked:
-                    self.emit_status(
-                        ThreadCommand("show_splash", "Connected to Camera Server")
-                    )
-                else:
+                if not connectionSetupWorked:
                     raise Exception("Could not connect to camera")
         else:
             connectionSetupWorked = False
@@ -439,13 +415,8 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
             self.settings.child("camera_settings", "camera_model_str").setValue(
                 CameraModel[1]
             )
-            self.emit_status(
-                ThreadCommand("show_splash", "Connected to Camera " + CameraModel[1])
-            )
 
-            if self.controller.InitCamera(addr=addr):
-                self.emit_status(ThreadCommand("show_splash", "Camera Initialized"))
-            else:
+            if not self.controller.InitCamera(addr=addr):
                 self.controller.DisconnectCamera()
                 raise Exception(
                     "Could not connect to camera; " + self.controller.StatusMSG
@@ -464,9 +435,6 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
         # Get Functions
         # =================================================
-        self.emit_status(
-            ThreadCommand("show_splash", "Obtaining Camera parameters...")
-        )
         self.settings.child("camera_settings", "firmware_version").setValue(
             self.controller.GetFirmwareVersion()
         )
@@ -785,23 +753,30 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
         ## remember to check measurement time if parameter is ticked
 
-    def prepare_data(self):
+    def prepare_data(self, show = False):
         width, height, bytesPerPixel = self.controller.GetImageSize()
         self.get_xaxis()
-        self.get_yaxis()
         # GetMeasurement function allocates memory by itself, no need to do it
 
         # Switches viewer type depending on image size
-        data_shape = "Data2D" if height != 1 else "Data1D"
+        if height != 1:
+            data_shape = "Data2D"
+            self.get_yaxis()
+            axes = [self.x_axis, self.y_axis]
+        else:
+            data_shape = "Data1D"
+            self.x_axis.index = 0
+            axes = [self.x_axis]
+
         if data_shape != self.data_shape:
             self.data_shape = data_shape
+            self.axes = axes
             # init the viewers
             self.dte_signal_temp.emit(DataToExport('Greateyes',
                                                    data=[DataFromPlugins(name='CCD Image', data=[
                                                        np.squeeze(np.zeros((height, width)).astype(float))],
                                                                          dim=self.data_shape, labels=['Camera'],
-                                                                         x_axis=self.x_axis,
-                                                                         y_axis=self.y_axis), ]))
+                                                                         axes=self.axes), ]))
 
     def emit_data(self):
         """
@@ -823,8 +798,7 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
                 self.dte_signal.emit(DataToExport('Greateyes',
                                                   data=[DataFromPlugins(name='CCD Image', data=[
                                                       np.squeeze(data.reshape(size_y, size_x)).astype(float)],
-                                                                        dim=self.data_shape, ), ]))
-                # No need to reemit axes and labels (done in prepare data)
+                                                                        dim=self.data_shape, axes=self.axes), ]))
 
                 self.settings.child("camera_settings", "camera_status").setValue(
                     "Data received"
