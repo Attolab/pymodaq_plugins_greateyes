@@ -760,9 +760,15 @@ class DAQ_2DViewer_GreateyesCCD(DAQ_Viewer_base):
 
         # Switches viewer type depending on image size
         if height != 1:
-            data_shape = "Data2D"
             self.get_yaxis()
-            axes = [self.x_axis, self.y_axis]
+
+            if width != 1:
+                data_shape = "Data2D"
+                axes = [self.x_axis, self.y_axis]
+
+            else:
+                data_shape = "Data1D"
+                axes = [self.y_axis]
         else:
             data_shape = "Data1D"
             self.x_axis.index = 0
